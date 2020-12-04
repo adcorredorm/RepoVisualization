@@ -1,2 +1,4 @@
+__pycache__/
 clone_folder/*
-data.json
+*.json
+.idea
