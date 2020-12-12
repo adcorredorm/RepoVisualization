@@ -6,7 +6,7 @@ from gen.Python3Parser import Python3Parser
 from definitionsVisitor import DefinitionsVisitor
 
 def get_definitions(file_path):
-    input_stream = FileStream(file_path)
+    input_stream = FileStream(file_path, encoding='utf-8')
     lexer = Python3Lexer(input_stream)
     stream = CommonTokenStream(lexer)
     parser = Python3Parser(stream)

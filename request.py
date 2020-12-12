@@ -1,11 +1,13 @@
 import requests 
 import os
+import sys
 import json
 import collections
 from datetime import datetime, timezone
 from dateutil.parser import parse
 
 from env import URL, TOKEN
+from pythonDefinitions import get_definitions
 
 org_URL = URL
 main_folder = 'clone_folder'
@@ -115,19 +117,30 @@ if __name__ == '__main__':
         files = []
         for lang, fl in files_by_lang.items():
             for f in fl:
-                with open(f'{folder}/{f}') as file:
+                path = f'{folder}/{f}'
+                with open(path) as file:
                     lines = len(file.readlines())
                 data[repo]['total_lines'] += lines
                 modifications = os.popen(f'git -C {folder} log --pretty="format:%ci" {f}').read().split('\n')
                 last_update = modifications[0] if len(modifications) > 0 else None
+                days = days_since_updated(last_update)
                 file_info = {
                     'name': f,
                     'lines': lines,
+                    'effective_lines': effective_lines(lines, days),
                     'updates': len(modifications),
                     'last_update': time_to_str(last_update),
-                    'days_since_updated': days_since_updated(last_update),
+                    'days_since_updated': days,
                     'language': lang
                 }
+
+                if lang == 'Python':
+                    try:
+                        definitions = get_definitions(path)
+                        file_info['definitions'] = definitions
+                    except Exception as e:
+                        print(f, e, file=sys.stderr)
+
                 data[repo]['files'].append(file_info)
         
         ef_lines = effective_lines(data[repo]['total_lines'], data[repo]['days_since_updated'])
@@ -139,7 +152,7 @@ if __name__ == '__main__':
         with open("data.json", "w+") as outfile:  
             json.dump(data, outfile, indent=2) 
         
-        # break
+        break
 
     s_data = sorted(data.items(), key= lambda kv: kv[1]['effective_lines'], reverse=True)
     s_data = collections.OrderedDict(s_data)

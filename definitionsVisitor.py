@@ -4,7 +4,8 @@ from gen.Python3Visitor import Python3Visitor
 
 class DefinitionsVisitor(Python3Visitor):
 
-    definitions = {
+    def __init__(self):
+        self.definitions = {
         'functions': [],
         'imports': [],
         'classes': []
@@ -73,3 +74,4 @@ class DefinitionsVisitor(Python3Visitor):
             'name': ctx.NAME().getText(),
             'line': ctx.NAME().getSymbol().line
         })
+        self.visitChildren(ctx)
