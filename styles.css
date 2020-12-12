@@ -1,0 +1,19 @@
+body {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+.title {
+  font-size: 1.8em;
+}
+
+.axis-label,
+.info-title {
+  font-size: 1.2em;
+  font-weight: bold;
+}

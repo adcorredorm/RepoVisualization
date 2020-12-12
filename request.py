@@ -6,7 +6,7 @@ import collections
 from datetime import datetime, timezone
 from dateutil.parser import parse
 
-from env import URL, TOKEN
+from env import ORG_NAME, URL, TOKEN
 from pythonDefinitions import get_definitions
 
 org_URL = URL
@@ -34,6 +34,7 @@ if __name__ == '__main__':
     
     data = {}
     data_org = {
+        'name': ORG_NAME,
         'total_repos': 0,
         'total_lines': 0,
         'effective_lines': 0,
@@ -152,7 +153,7 @@ if __name__ == '__main__':
         with open("data.json", "w+") as outfile:  
             json.dump(data, outfile, indent=2) 
         
-        break
+        # break
 
     s_data = sorted(data.items(), key= lambda kv: kv[1]['effective_lines'], reverse=True)
     s_data = collections.OrderedDict(s_data)

@@ -3,3 +3,4 @@ clone_folder/*
 *.json
 .idea
 env.py
+.prettierrc
