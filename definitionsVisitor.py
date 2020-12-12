@@ -6,7 +6,8 @@ class DefinitionsVisitor(Python3Visitor):
 
     definitions = {
         'functions': [],
-        'imports': []
+        'imports': [],
+        'classes': []
     }
     
     def visitFile_input(self, ctx:Python3Parser.FuncdefContext):
@@ -65,4 +66,10 @@ class DefinitionsVisitor(Python3Visitor):
             'namespace': lib.getText(),
             'path': path,
             'alias': alias.getText() if alias else ''
+        })
+
+    def visitClassdef(self, ctx:Python3Parser.Dotted_as_nameContext):
+        self.definitions['classes'].append({
+            'name': ctx.NAME().getText(),
+            'line': ctx.NAME().getSymbol().line
         })

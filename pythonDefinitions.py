@@ -1,6 +1,6 @@
 import sys
 import json
-from antlr4 import *
+from antlr4 import FileStream, CommonTokenStream
 from gen.Python3Lexer import Python3Lexer
 from gen.Python3Parser import Python3Parser
 from definitionsVisitor import DefinitionsVisitor
