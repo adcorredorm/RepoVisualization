@@ -1,6 +1,7 @@
 __pycache__/
 clone_folder/*
 *.json
+!colors.json
 .idea
 env.py
 .prettierrc

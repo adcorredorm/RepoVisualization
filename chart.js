@@ -11,11 +11,20 @@ const binfo_height = full_height - chart_height;
 
 const sinfo_width = full_width - chart_width;
 const sinfo_height = chart_height;
+const textmargin = { x: 20, y: 30 };
 
 const svg = d3
   .select('svg')
   .attr('width', full_width)
   .attr('height', full_height);
+
+var lang_colors = {};
+
+function colors(lang) {
+  if (lang === undefined || lang === null) return 'black';
+  if (lang.name in lang_colors) return lang_colors[lang.name].color;
+  return 'black';
+}
 
 function render(data) {
   const data_org = data.org;
@@ -42,6 +51,7 @@ function render(data) {
 
   const chart = svg
     .append('g')
+    .attr('id', 'chart')
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
   const xAxisTickFormat = (number) =>
@@ -80,7 +90,10 @@ function render(data) {
     .append('rect')
     .attr('y', (d) => yScale(yValue(d)))
     .attr('width', (d) => xScale(xValue(d)))
-    .attr('height', yScale.bandwidth());
+    .attr('height', yScale.bandwidth())
+    .attr('fill', (d) => colors(d.languages[0]))
+    .on('mouseover', mouseover)
+    .on('mouseout', mouseout);
 
   chart
     .append('text')
@@ -116,26 +129,28 @@ function render(data) {
   binfo
     .append('text')
     .attr('class', 'info-title')
-    .attr('x', brx + 20)
-    .attr('y', bry + 30)
+    .attr('x', brx + textmargin.x)
+    .attr('y', bry + textmargin.y)
     .text('Top Contributors');
 
   const contributors = binfo
     .append('g')
-    .attr('transform', `translate(${brx + 20}, ${bry})`);
+    .attr('transform', `translate(${brx + textmargin.x}, ${bry})`);
+
   contributors
     .selectAll('text')
     .data(top_contributors)
     .enter()
     .append('text')
-    .attr('y', (_, i) => 30 * (i + 2))
+    .attr('y', (_, i) => textmargin.y * (i + 2))
     .text(
       ([name, attr]) =>
-        `${name} - Contribuciones: ${attr.contributions} - URL: ${attr.url}`
+        `${name} - Contributions: ${attr.contributions} - URL: ${attr.url}`
     );
 
   const sinfo = svg
     .append('g')
+    .attr('id', 'sinfo')
     .attr('transform', `translate(${chart_width}, 0)`);
 
   const srw = sinfo_width * 0.9;
@@ -157,10 +172,65 @@ function render(data) {
   sinfo
     .append('text')
     .attr('class', 'info-title')
-    .attr('x', srx + 20)
-    .attr('y', sry + 30)
+    .attr('x', srx + textmargin.x)
+    .attr('y', sry + textmargin.y)
     .text('Information');
+
+  sinfo
+    .append('g')
+    .attr('class', 'items')
+    .attr(
+      'transform',
+      `translate(${srx + textmargin.x}, ${sry + textmargin.y})`
+    );
+
+  function mouseover(_, d) {
+    var langs = [];
+    Object.values(d.languages).forEach(({ name, percentage }) => {
+      langs.push(`- ${name}: ${percentage}`);
+    });
+
+    const info = [
+      d.clone_url,
+      'Languages:',
+      ...langs,
+      `Last update: ${d.updated}`,
+      `Days Since update: ${d.days_since_updated}`,
+      `Total lines: ${d.total_lines}`,
+      `Effective_lines: ${d.effective_lines}`,
+    ];
+
+    const items = d3
+      .select('#sinfo')
+      .select('.items')
+      .selectAll('.item')
+      .data(info);
+
+    items.join(
+      (enter) => {
+        enter
+          .append('text')
+          .attr('class', 'item')
+          .attr('y', (_, i) => textmargin.y * (i + 1))
+          .text((d) => d);
+      },
+      (update) => {
+        update.text((d) => d);
+      },
+      (exit) => exit.remove()
+    );
+
+    d3.select('#chart').selectAll('rect').attr('opacity', 0.7);
+    d3.select(this).attr('opacity', 1);
+  }
+
+  function mouseout(_, d) {
+    d3.select('#sinfo').select('.items').selectAll('.item').remove();
+    d3.select('#chart').selectAll('rect').attr('opacity', 1);
+  }
 }
+
+d3.json('colors.json').then((data) => (lang_colors = data));
 
 d3.json('data.json').then((data) => {
   console.log(data);
