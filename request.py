@@ -35,7 +35,7 @@ if __name__ == '__main__':
         'total_repos': 0,
         'total_lines': 0,
         'effective_lines': 0,
-        'contributors': set()
+        'contributors': {}
     }
 
     repos = get_data(org_URL) 
@@ -56,8 +56,8 @@ if __name__ == '__main__':
             'default_branch': repo['default_branch'],
             'total_lines': 0,
             'effective_lines': 0,
-            'branches': [],
             'contributors': [],
+            'branches': [],
             'languages': [],
             'files': []
         }
@@ -73,6 +73,7 @@ if __name__ == '__main__':
 
         # Branches
         branches = get_data(data[repo]['branches_url'])
+        del data[repo]['branches_url']
         for branch in branches:
             commit = get_data(branch['commit']['url'])
             last_update = commit['commit']['committer']['date']
@@ -86,16 +87,22 @@ if __name__ == '__main__':
         
         # Contributors
         contributors = get_data(data[repo]['contributors_url'])
+        del data[repo]['contributors_url']
         for cont in contributors:
-            data[repo]['contributors'].append({
-                'username': cont['login'],
-                'url': cont['html_url'],
-                'contributions': int(cont['contributions'])
-            })
-            data_org['contributors'].add(cont['login'])
+            username = cont['login']
+            contributions = int(cont['contributions'])
+            if username in data_org['contributors']:
+                data_org['contributors'][username]['contributions'] += contributions
+            else:
+                data_org['contributors'][username] = {
+                    'url': cont['html_url'],
+                    'contributions': contributions
+                }
+            data[repo]['contributors'].append(cont['login'])
         
         # Languages
         languages = get_data(data[repo]['languages_url'])
+        del data[repo]['languages_url']
         total = sum(languages.values())
         for k, v in languages.items():
             data[repo]['languages'].append({
@@ -134,11 +141,14 @@ if __name__ == '__main__':
         
         # break
 
-    data_org['contributors'] = list(data_org['contributors'])
-    sorted_data = sorted(data.items(), key= lambda kv: kv[1]['effective_lines'], reverse=True)
-    sorted_data = collections.OrderedDict(sorted_data)
+    s_data = sorted(data.items(), key= lambda kv: kv[1]['effective_lines'], reverse=True)
+    s_data = collections.OrderedDict(s_data)
+
+    s_cont = sorted(data_org['contributors'].items(), key= lambda kv: kv[1]['contributions'], reverse=True)
+    s_cont = collections.OrderedDict(s_cont)
+    data_org['contributors'] = s_cont 
 
     final_data = {'org': data_org}
-    final_data = final_data | sorted_data
+    final_data = final_data | s_data
     with open("data.json", "w+") as outfile:  
         json.dump(final_data, outfile, indent=2) 
