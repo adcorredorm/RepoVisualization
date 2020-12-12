@@ -2,3 +2,4 @@ __pycache__/
 clone_folder/*
 *.json
 .idea
+env.py

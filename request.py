@@ -1,19 +1,45 @@
 import requests 
 import os
 import json
+import collections
+from datetime import datetime, timezone
+from dateutil.parser import parse
 
-org_URL = 'https://api.github.com/orgs/uapa-team/repos'
+from env import URL, TOKEN
+
+org_URL = URL
 main_folder = 'clone_folder'
+today = datetime.today()
+today = today.replace(tzinfo = timezone.utc)
 
 def get_data(url):
-    headers = {'Authorization': 'token 4fd92298adbc61efb4296a3cf8940db490d449cc'}
+    headers = {'Authorization': f'token {TOKEN}'}
     return requests.get(url=url, headers=headers).json()
 
-if __name__ == '__main__':
+def time_to_str(time):
+    return parse(time).strftime('%Y-%m-%d')
 
+def days_since_updated(time):
+    try:
+        return (today - parse(time)).days 
+    except:
+        return -1
+
+def effective_lines(lines, days, factor=0.999):
+    return int(lines * (factor)**days)
+
+if __name__ == '__main__':
+    
     data = {}
+    data_org = {
+        'total_repos': 0,
+        'total_lines': 0,
+        'effective_lines': 0,
+        'contributors': set()
+    }
 
     repos = get_data(org_URL) 
+    data_org['total_repos'] = len(repos)
 
     for repo in repos:
         data[repo['name']] = {
@@ -22,12 +48,15 @@ if __name__ == '__main__':
             'description': repo['description'],
             'branches_url': repo['branches_url'].split('{')[0],
             'contributors_url': repo['contributors_url'],
+            'languages_url': repo['languages_url'],
             'clone_url': repo['clone_url'],
-            'created': repo['created_at'],
-            'updated': repo['updated_at'],
-            'branches': [],
+            'created': time_to_str(repo['created_at']),
+            'updated': time_to_str(repo['updated_at']),
+            'days_since_updated': days_since_updated(repo['updated_at']),
             'default_branch': repo['default_branch'],
             'total_lines': 0,
+            'effective_lines': 0,
+            'branches': [],
             'contributors': [],
             'languages': [],
             'files': []
@@ -46,10 +75,12 @@ if __name__ == '__main__':
         branches = get_data(data[repo]['branches_url'])
         for branch in branches:
             commit = get_data(branch['commit']['url'])
+            last_update = commit['commit']['committer']['date']
             data[repo]['branches'].append({
                 'name': branch['name'],
                 'protected': bool(branch['protected']),
-                'last_update': commit['commit']['committer']['date'],
+                'last_update': time_to_str(last_update),
+                'days_since_updated': days_since_updated(last_update),
                 'commit message': commit['commit']['message']
             })
         
@@ -61,39 +92,53 @@ if __name__ == '__main__':
                 'url': cont['html_url'],
                 'contributions': int(cont['contributions'])
             })
+            data_org['contributors'].add(cont['login'])
         
         # Languages
-        languages = os.popen(f'github-linguist {folder}').read().strip().split('\n')
-        for lang in languages:
-            p, l = lang.split('%')
+        languages = get_data(data[repo]['languages_url'])
+        total = sum(languages.values())
+        for k, v in languages.items():
             data[repo]['languages'].append({
-                'name': l.strip(),
-                'percentage': float(p)
-                })
+                'name': k,
+                'percentage': '{:0.2f}%'.format((v / total)*100)
+            })
 
         # Files
-        files = os.popen(f'git -C {folder} ls-files').read().strip().split('\n')
-        for f in files:
-            lines = int(os.popen('wc -l {}/{}/{}'.format(
-                main_folder, repo, f)).read().split(' ')[0])
-            
-            data[repo]['total_lines'] += lines
-
-            modifications = os.popen(f'git -C {folder} log --pretty="format:%ci" {f}').read().split('\n')
-
-            language = os.popen(f'github-linguist {folder}/{f}').read()
-            language = language.split('language:')[1].strip().split('\n')[0]
-
-            file_info = {
-                'name': f,
-                'lines': lines,
-                'updates': len(modifications),
-                'last_update': modifications[0] if len(modifications) > 0 else None,
-                'language': language
-            }
-            data[repo]['files'].append(file_info)
+        files_by_lang = json.loads(os.popen(f'github-linguist {folder} --json').read())
+        files = []
+        for lang, fl in files_by_lang.items():
+            for f in fl:
+                with open(f'{folder}/{f}') as file:
+                    lines = len(file.readlines())
+                data[repo]['total_lines'] += lines
+                modifications = os.popen(f'git -C {folder} log --pretty="format:%ci" {f}').read().split('\n')
+                last_update = modifications[0] if len(modifications) > 0 else None
+                file_info = {
+                    'name': f,
+                    'lines': lines,
+                    'updates': len(modifications),
+                    'last_update': time_to_str(last_update),
+                    'days_since_updated': days_since_updated(last_update),
+                    'language': lang
+                }
+                data[repo]['files'].append(file_info)
         
-        break
-    
+        ef_lines = effective_lines(data[repo]['total_lines'], data[repo]['days_since_updated'])
+        data[repo]['effective_lines'] = ef_lines
+
+        data_org['total_lines'] += data[repo]['total_lines']
+        data_org['effective_lines'] += ef_lines
+        
+        with open("data.json", "w+") as outfile:  
+            json.dump(data, outfile, indent=2) 
+        
+        # break
+
+    data_org['contributors'] = list(data_org['contributors'])
+    sorted_data = sorted(data.items(), key= lambda kv: kv[1]['effective_lines'], reverse=True)
+    sorted_data = collections.OrderedDict(sorted_data)
+
+    final_data = {'org': data_org}
+    final_data = final_data | sorted_data
     with open("data.json", "w+") as outfile:  
-        json.dump(data, outfile, indent=2) 
+        json.dump(final_data, outfile, indent=2) 
