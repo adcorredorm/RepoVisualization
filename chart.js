@@ -1,4 +1,4 @@
-const xAxisLabelText = 'Effective Lines';
+const xAxisLabelText = "Effective Lines";
 const full_width = document.body.clientWidth;
 const full_height = document.body.clientHeight;
 
@@ -13,16 +13,16 @@ const sinfo_height = chart_height;
 const textmargin = { x: 20, y: 30 };
 
 const svg = d3
-  .select('svg')
-  .attr('width', full_width)
-  .attr('height', full_height);
+  .select("svg")
+  .attr("width", full_width)
+  .attr("height", full_height);
 
 var lang_colors = {};
 
 function colors(lang) {
-  if (lang === undefined || lang === null) return 'black';
+  if (lang === undefined || lang === null) return "black";
   if (lang.name in lang_colors) return lang_colors[lang.name].color;
-  return 'black';
+  return "black";
 }
 
 function render(data) {
@@ -49,12 +49,12 @@ function render(data) {
     .padding(0.1);
 
   const chart = svg
-    .append('g')
-    .attr('id', 'chart')
-    .attr('transform', `translate(${margin.left},${margin.top})`);
+    .append("g")
+    .attr("id", "chart")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
   const xAxisTickFormat = (number) =>
-    d3.format('.3s')(number).replace('G', 'B');
+    d3.format(".3s")(number).replace("G", "B");
 
   const xAxis = d3
     .axisBottom(xScale)
@@ -62,48 +62,48 @@ function render(data) {
     .tickSize(-innerHeight);
 
   chart
-    .append('g')
+    .append("g")
     .call(d3.axisLeft(yScale))
-    .selectAll('.domain, .tick line')
+    .selectAll(".domain, .tick line")
     .remove();
 
   const xAxisG = chart
-    .append('g')
+    .append("g")
     .call(xAxis)
-    .attr('transform', `translate(0,${innerHeight})`);
+    .attr("transform", `translate(0,${innerHeight})`);
 
-  xAxisG.select('.domain').remove();
+  xAxisG.select(".domain").remove();
 
   xAxisG
-    .append('text')
-    .attr('class', 'axis-label')
-    .attr('y', 40)
-    .attr('x', innerWidth / 2)
-    .attr('fill', 'black')
+    .append("text")
+    .attr("class", "axis-label")
+    .attr("y", 40)
+    .attr("x", innerWidth / 2)
+    .attr("fill", "black")
     .text(xAxisLabelText);
 
   chart
-    .selectAll('rect')
+    .selectAll("rect")
     .data(data)
     .enter()
-    .append('rect')
-    .attr('y', (d) => yScale(yValue(d)))
-    .attr('width', (d) => xScale(xValue(d)))
-    .attr('height', yScale.bandwidth())
-    .attr('fill', (d) => colors(d.languages[0]))
-    .on('mouseover', mouseover)
-    .on('mouseout', mouseout);
+    .append("rect")
+    .attr("y", (d) => yScale(yValue(d)))
+    .attr("width", (d) => xScale(xValue(d)))
+    .attr("height", yScale.bandwidth())
+    .attr("fill", (d) => colors(d.languages[0]))
+    .on("mouseover", mouseover)
+    .on("mouseout", mouseout);
 
   chart
-    .append('text')
-    .attr('class', 'title')
-    .attr('y', -margin.top / 2)
-    .attr('x', (innerWidth - margin.left) / 2)
+    .append("text")
+    .attr("class", "title")
+    .attr("y", -margin.top / 2)
+    .attr("x", (innerWidth - margin.left) / 2)
     .text(data_org.name);
 
   const binfo = svg
-    .append('g')
-    .attr('transform', `translate(0,${chart_height})`);
+    .append("g")
+    .attr("transform", `translate(0,${chart_height})`);
 
   const brw = binfo_width * 0.7;
   const brh = binfo_height * 0.75;
@@ -111,46 +111,46 @@ function render(data) {
   const bry = (binfo_height - brh) / 2;
 
   binfo
-    .append('rect')
-    .attr('x', brx)
-    .attr('y', bry)
-    .attr('rx', 30)
-    .attr('width', brw)
-    .attr('height', brh)
-    .attr('fill', 'none')
+    .append("rect")
+    .attr("x", brx)
+    .attr("y", bry)
+    .attr("rx", 30)
+    .attr("width", brw)
+    .attr("height", brh)
+    .attr("fill", "none")
     // .attr('stroke', 'black')
-    .attr('stroke-width', 2);
+    .attr("stroke-width", 2);
 
   const top_contributors = Object.entries(data_org.contributors)
     .sort(([, a], [, b]) => b.contributions - a.contributions)
     .slice(0, 5);
 
   binfo
-    .append('text')
-    .attr('class', 'info-title')
-    .attr('x', brx + textmargin.x)
-    .attr('y', bry + textmargin.y)
-    .text('Top Contributors');
+    .append("text")
+    .attr("class", "info-title")
+    .attr("x", brx + textmargin.x)
+    .attr("y", bry + textmargin.y)
+    .text("Top Contributors");
 
   const contributors = binfo
-    .append('g')
-    .attr('transform', `translate(${brx + textmargin.x}, ${bry})`);
+    .append("g")
+    .attr("transform", `translate(${brx + textmargin.x}, ${bry})`);
 
   contributors
-    .selectAll('text')
+    .selectAll("text")
     .data(top_contributors)
     .enter()
-    .append('text')
-    .attr('y', (_, i) => textmargin.y * (i + 2))
+    .append("text")
+    .attr("y", (_, i) => textmargin.y * (i + 2))
     .text(
       ([name, attr]) =>
         `${name} - Contributions: ${attr.contributions} - URL: ${attr.url}`
     );
 
   const sinfo = svg
-    .append('g')
-    .attr('id', 'sinfo')
-    .attr('transform', `translate(${chart_width}, 0)`);
+    .append("g")
+    .attr("id", "sinfo")
+    .attr("transform", `translate(${chart_width}, 0)`);
 
   const srw = sinfo_width * 0.9;
   const srh = sinfo_height * 0.95;
@@ -158,28 +158,28 @@ function render(data) {
   const sry = (sinfo_height - srh) / 2;
 
   sinfo
-    .append('rect')
-    .attr('x', srx)
-    .attr('y', sry)
-    .attr('rx', 30)
-    .attr('width', srw)
-    .attr('height', srh)
-    .attr('fill', 'none')
+    .append("rect")
+    .attr("x", srx)
+    .attr("y", sry)
+    .attr("rx", 30)
+    .attr("width", srw)
+    .attr("height", srh)
+    .attr("fill", "none")
     // .attr('stroke', 'black')
-    .attr('stroke-width', 2);
+    .attr("stroke-width", 2);
 
   sinfo
-    .append('text')
-    .attr('class', 'info-title')
-    .attr('x', srx + textmargin.x)
-    .attr('y', sry + textmargin.y)
-    .text('Information');
+    .append("text")
+    .attr("class", "info-title")
+    .attr("x", srx + textmargin.x)
+    .attr("y", sry + textmargin.y)
+    .text("Information");
 
   sinfo
-    .append('g')
-    .attr('class', 'items')
+    .append("g")
+    .attr("class", "items")
     .attr(
-      'transform',
+      "transform",
       `translate(${srx + textmargin.x}, ${sry + textmargin.y})`
     );
 
@@ -191,7 +191,7 @@ function render(data) {
 
     const info = [
       d.clone_url,
-      'Languages:',
+      "Languages:",
       ...langs,
       `Last update: ${d.updated}`,
       `Days Since update: ${d.days_since_updated}`,
@@ -200,17 +200,17 @@ function render(data) {
     ];
 
     const items = d3
-      .select('#sinfo')
-      .select('.items')
-      .selectAll('.item')
+      .select("#sinfo")
+      .select(".items")
+      .selectAll(".item")
       .data(info);
 
     items.join(
       (enter) => {
         enter
-          .append('text')
-          .attr('class', 'item')
-          .attr('y', (_, i) => textmargin.y * (i + 1))
+          .append("text")
+          .attr("class", "item")
+          .attr("y", (_, i) => textmargin.y * (i + 1))
           .text((d) => d);
       },
       (update) => {
@@ -219,19 +219,19 @@ function render(data) {
       (exit) => exit.remove()
     );
 
-    d3.select('#chart').selectAll('rect').attr('opacity', 0.7);
-    d3.select(this).attr('opacity', 1);
+    d3.select("#chart").selectAll("rect").attr("opacity", 0.7);
+    d3.select(this).attr("opacity", 1);
   }
 
   function mouseout(_, d) {
-    d3.select('#sinfo').select('.items').selectAll('.item').remove();
-    d3.select('#chart').selectAll('rect').attr('opacity', 1);
+    d3.select("#sinfo").select(".items").selectAll(".item").remove();
+    d3.select("#chart").selectAll("rect").attr("opacity", 1);
   }
 }
 
-d3.json('colors.json').then((data) => (lang_colors = data));
+d3.json("colors.json").then((data) => (lang_colors = data));
 
-d3.json('data.json').then((data) => {
+d3.json("data.json").then((data) => {
   console.log(data);
   render(data);
 });
