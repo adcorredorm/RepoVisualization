@@ -3,6 +3,7 @@ import os
 import sys
 import json
 import collections
+import copy
 from datetime import datetime, timezone
 from dateutil.parser import parse
 
@@ -59,7 +60,7 @@ if __name__ == '__main__':
             'default_branch': repo['default_branch'],
             'total_lines': 0,
             'effective_lines': 0,
-            'contributors': [],
+            'contributors': {},
             'branches': [],
             'languages': [],
             'files': []
@@ -94,14 +95,18 @@ if __name__ == '__main__':
         for cont in contributors:
             username = cont['login']
             contributions = int(cont['contributions'])
+
+            contributor_info = {
+                'url': cont['html_url'],
+                'contributions': contributions
+            }
+            data[repo]['contributors'][username] = contributor_info
+
             if username in data_org['contributors']:
                 data_org['contributors'][username]['contributions'] += contributions
             else:
-                data_org['contributors'][username] = {
-                    'url': cont['html_url'],
-                    'contributions': contributions
-                }
-            data[repo]['contributors'].append(cont['login'])
+                data_org['contributors'][username] = copy.deepcopy(contributor_info)
+            
         
         # Languages
         languages = get_data(data[repo]['languages_url'])

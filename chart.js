@@ -1,4 +1,3 @@
-const titleText = 'Top 10 Most Populous Countries';
 const xAxisLabelText = 'Effective Lines';
 const full_width = document.body.clientWidth;
 const full_height = document.body.clientHeight;
